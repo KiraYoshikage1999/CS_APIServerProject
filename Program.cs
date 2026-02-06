@@ -1,5 +1,6 @@
 
 using CS_APIServerProject.Data;
+using CS_APIServerProject.Mapping;
 using Microsoft.EntityFrameworkCore;
 
 namespace CS_APIServerProject
@@ -23,6 +24,8 @@ namespace CS_APIServerProject
             //DB
             builder.Services.AddDbContext<DBContext>(opt =>
                 opt.UseSqlServer(builder.Configuration.GetConnectionString("Db")));
+
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             var app = builder.Build();
 

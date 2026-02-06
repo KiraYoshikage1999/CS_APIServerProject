@@ -1,6 +1,6 @@
-﻿namespace CS_APIServerProject.Models
+﻿namespace CS_APIServerProject.DTO
 {
-    public class Product
+    public class ProductReadDTO
     {
         public Guid Id { get; set; }
         public string? Brand { get; set; }
@@ -11,10 +11,6 @@
         public string? FK_Salesman { get; set; }
         public string? Currency { get; set; }
 
-        public Characteristics? Characteristics { get; set; } 
-
-
-
-
+        public CharacteristicsDTO? Characteristics { get; set; }
     }
 }
