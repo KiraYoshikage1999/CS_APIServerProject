@@ -10,6 +10,8 @@ namespace CS_APIServerProject.Data
         public DbSet<Product> Products => Set<Product>();
         //Adding User in DataBase
         public DbSet<User> Users => Set<User>();
+        //Adding Order in DataBase
+        public DbSet<Order> Orders => Set<Order>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -20,6 +22,9 @@ namespace CS_APIServerProject.Data
             //User
             modelBuilder.Entity<User>();
 
+            //Order with Foreign Key for products with type of connection many to many.
+            modelBuilder.Entity<Order>()
+                .OwnsMany(p => p.FK_Products);
 
 
             base.OnModelCreating(modelBuilder);

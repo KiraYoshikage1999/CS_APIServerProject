@@ -4,8 +4,7 @@ namespace CS_APIServerProject.DTO
 {
     public class UserUpdateDTO
     {
-        public Guid Id { get; set; }
-        [Required]
+        
         public DateTime? DateOfBirth { get; set; }
         [Required, Phone]
         public string? PhoneNumber { get; set; }

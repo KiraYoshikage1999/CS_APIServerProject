@@ -30,9 +30,26 @@ namespace CS_APIServerProject.Mapping
             CreateMap<UserUpdateDTO, User>()
                 .ForMember(d => d.Id, opt => opt.Ignore());
 
+            //For Order
+            CreateMap<Order, OrderCreateDTO>();
+            CreateMap<Order, Product>();
+
+            //Tying order Create DTO method with Order and user 
+            CreateMap<OrderCreateDTO, Order>()
+                .ForMember(d => d.Id,
+                opt => opt.MapFrom(s => s.FK_Products ?? new List<Product>()));
+
+            //Tying order Update DTO method with Order and user
+            CreateMap<OrderUpdateDTO, Order>()
+                .ForMember(d => d.Id, opt => opt.Ignore())
+                .ForMember(d => d.FK_Products, 
+                opt => opt.MapFrom(s => s.FK_Products ?? new List<Product>()));
+
+
+
 
         }
 
-        
+
     }
 }
