@@ -12,6 +12,7 @@ namespace CS_APIServerProject.Data
         public DbSet<User> Users => Set<User>();
         //Adding Order in DataBase
         public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,7 +25,15 @@ namespace CS_APIServerProject.Data
 
             //Order with Foreign Key for products with type of connection many to many.
             modelBuilder.Entity<Order>()
-                .OwnsMany(p => p.FK_Products);
+                .HasMany(o => o.Items)
+                .WithOne(i => i.Order)
+                .HasForeignKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(i => i.Product)
+                .WithMany()
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             base.OnModelCreating(modelBuilder);

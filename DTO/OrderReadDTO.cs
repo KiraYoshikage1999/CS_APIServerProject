@@ -5,12 +5,16 @@ namespace CS_APIServerProject.DTO
 {
     public class OrderReadDTO
     {
-        public Guid Id { get; set; }
         [Required]
+        public string? CustomerId { get; set; }
+        [Required]
+        public string? Status { get; set; }
+
+        [Required, MinLength(0)]
         public int Number { get; set; }
         [Required]
         public DateTime CreatedAt { get; set; }
 
-        public List<Product>? FK_Products { get; set; }
+        public List<OrderItem>? Items { get; set; }
     }
 }

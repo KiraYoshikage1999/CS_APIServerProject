@@ -11,12 +11,12 @@ namespace CS_APIServerProject.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class HomeController : Controller
+    public class ProductController : Controller
     {
         private readonly IMapper _maper;
         private readonly DBContext _db;
 
-        public HomeController(DBContext db, IMapper mapper)
+        public ProductController(DBContext db, IMapper mapper)
         {
             _maper = mapper;
             _db = db;
@@ -27,13 +27,71 @@ namespace CS_APIServerProject.Controllers
             return View();
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<ProductReadDTO>>> GetAll()
-        {
-            var items = await _db.Products.ToListAsync();
-            return Ok(_maper.Map<ProductReadDTO>(items));
-        }
+        //[HttpGet]
+        //public async Task<ActionResult<List<ProductReadDTO>>> GetAll()
+        //{
+        //    var items = await _db.Products.ToListAsync();
+        //    return Ok(_maper.Map<ProductReadDTO>(items));
+        //}
 
+        [HttpGet]
+        public async Task<ActionResult<PageResult<ProductReadDTO>>> Get([FromBody] ProductQuery q)
+        {
+            //Filtering
+            IQueryable<Product> query = _db.Products.
+                AsNoTracking();
+            if(!string.IsNullOrWhiteSpace(q.Brand))
+            {
+                query = query.Where(p => 
+                p.Brand == q.Brand);
+            }
+            if(!string.IsNullOrWhiteSpace(q.State))
+            {
+                query = query.Where(p => 
+                p.Characteristics.state == q.State);
+            }
+            if (q.PriceFrom > 0)
+            {
+                query = query.Where(p => p.Price >= q.PriceTo);
+            }
+            if (q.PriceTo > 0) {
+                query = query.Where(p => p.Price <= q.PriceTo);
+            }
+
+            //Sorting
+            bool desc = string.Equals(q.SortDir, "desc", StringComparison.OrdinalIgnoreCase);
+
+            query = q.SortBy.ToLower() switch
+            {
+                "price" => desc ? query.OrderByDescending(o => o.Price) : query.OrderBy(o => o.Price),
+
+                "quantity" => desc ? query.OrderByDescending(o => o.Quanity) : query.OrderBy(o => o.Quanity),
+
+                "brand" => desc ? query.OrderByDescending(o => o.Brand) : query.OrderBy(o => o.Brand),
+
+                _ => query.OrderBy(o => o.Brand)
+                //_ => desc ? query.OrderByDescending(o => o.Brand) : query.OrderBy(o => o.Brand),
+
+            };
+
+            //Total count
+            var totalCount = await query.CountAsync();
+            //Pagination
+            var items = await query.Skip((q.Page - 1) * q.PageSize)
+                .Take(q.PageSize)
+                .ToListAsync();
+
+            var result = _maper.Map<List<ProductReadDTO>>(items);
+
+            return Ok(new
+            {
+                totalCount,
+                q.Page,
+                q.PageSize,
+                Data = result
+            });
+        }
+ 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id)
         {

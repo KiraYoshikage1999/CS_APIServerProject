@@ -24,12 +24,69 @@ namespace CS_APIServerProject.Controllers
         }
 
         //Get all Orders
+
         [HttpGet]
-        public async Task<ActionResult<List<OrderReadDTO>>> GetAllOrders()
+        public async Task<ActionResult<PageResult<OrderReadDTO>>> Get([FromBody] OrderQuery q)
         {
-            var items = await _db.Orders.ToListAsync();
-            if (items == null) return NotFound();
-            return Ok(items);
+            //Filtering
+            IQueryable<Order> query = _db.Orders.
+                AsNoTracking();
+            if (q.Number > 0)
+            {
+                query = query.Where(p =>
+                p.Number == q.Number);
+            }
+            if (!string.IsNullOrWhiteSpace(q.Status))
+            {
+                query = query.Where(p =>
+                p.Status == q.Status);
+            }
+            if (q.CreatedAt != null)
+            {
+                query = query.Where(p => 
+                p.CreatedAt == q.CreatedAt);  
+            }
+            //if (q.PriceFrom > 0)
+            //{
+            //    query = query.Where(p => p.Price >= q.PriceTo);
+            //}
+            //if (q.PriceTo > 0)
+            //{
+            //    query = query.Where(p => p.Price <= q.PriceTo);
+            //}
+
+            //Sorting
+            bool desc = string.Equals(q.SortDir, "desc", StringComparison.OrdinalIgnoreCase);
+
+            query = q.SortBy.ToLower() switch
+            {
+                "createdAt" => desc ? query.OrderByDescending(o => o.CreatedAt) : query.OrderBy(o => o.CreatedAt),
+
+                "status" => desc ? query.OrderByDescending(o => o.Status) : query.OrderBy(o => o.Status),
+
+                "number" => desc ? query.OrderByDescending(o => o.Number) : query.OrderBy(o => o.Number),
+
+                _ => query.OrderBy(o => o.Number)
+                //_ => desc ? query.OrderByDescending(o => o.Brand) : query.OrderBy(o => o.Brand),
+
+            };
+
+            //Total count
+            var totalCount = await query.CountAsync();
+            //Pagination
+            var items = await query.Skip((q.Page - 1) * q.PageSize)
+                .Take(q.PageSize)
+                .ToListAsync();
+
+            var result = _maper.Map<List<OrderReadDTO>>(items);
+
+            return Ok(new
+            {
+                totalCount,
+                q.Page,
+                q.PageSize,
+                Data = result
+            });
         }
         //Get one order by Id
         [HttpGet("{id:guid}")]
@@ -76,6 +133,8 @@ namespace CS_APIServerProject.Controllers
         {
             var entity = await _db.Orders.FirstOrDefaultAsync(x => x.Id == id);
             if (entity == null) { return NotFound(); }
+
+            
             _db.Orders.Remove(entity);
             await _db.SaveChangesAsync();
             return Ok();
