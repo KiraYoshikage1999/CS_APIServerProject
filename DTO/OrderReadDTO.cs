@@ -10,11 +10,11 @@ namespace CS_APIServerProject.DTO
         [Required]
         public string? Status { get; set; }
 
-        [Required, MinLength(0)]
+        [Required]
         public int Number { get; set; }
         [Required]
         public DateTime CreatedAt { get; set; }
 
-        public List<OrderItem>? Items { get; set; }
+        public List<OrderItemReadDTO>? Items { get; set; }
     }
 }

@@ -5,11 +5,13 @@ namespace CS_APIServerProject.DTO
 {
     public class OrderItemReadDTO
     {
-        public Order? Order { get; set; }
-        public Product? Product { get; set; }
-        [Required,MinLength(0)]
+        public Guid OrderId { get; set; }
+        public OrderReadDTO? Order { get; set; } 
+        public Guid ProductId { get; set; }
+        public ProductReadDTO? Product { get; set; }
+        [Required]
         public int Quanity { get; set; }
-        [Required,MinLength(0)]
+        [Required]
         public decimal Price { get; set; }
     }
 }

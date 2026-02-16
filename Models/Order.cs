@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CS_APIServerProject.DTO;
+using System.ComponentModel.DataAnnotations;
 namespace CS_APIServerProject.Models
 {
     public class Order

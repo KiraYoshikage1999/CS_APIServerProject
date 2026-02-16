@@ -15,6 +15,6 @@ namespace CS_APIServerProject.DTO
         [Required]
         public DateTime CreatedAt { get; set; }
 
-        public List<OrderItem>? Items { get; set; }
+        public List<OrderItemCreateDTO>? Items { get; set; }
     }
 }

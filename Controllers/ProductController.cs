@@ -14,18 +14,15 @@ namespace CS_APIServerProject.Controllers
     public class ProductController : Controller
     {
         private readonly IMapper _maper;
-        private readonly DBContext _db;
+        private readonly DataBase _db;
 
-        public ProductController(DBContext db, IMapper mapper)
+        public ProductController(DataBase db, IMapper mapper)
         {
             _maper = mapper;
             _db = db;
         }
-        [HttpGet]
-        public IActionResult Index()
-        {
-            return View();
-        }
+       
+
 
         //[HttpGet]
         //public async Task<ActionResult<List<ProductReadDTO>>> GetAll()
@@ -52,7 +49,7 @@ namespace CS_APIServerProject.Controllers
             }
             if (q.PriceFrom > 0)
             {
-                query = query.Where(p => p.Price >= q.PriceTo);
+                query = query.Where(p => p.Price >= q.PriceFrom);
             }
             if (q.PriceTo > 0) {
                 query = query.Where(p => p.Price <= q.PriceTo);

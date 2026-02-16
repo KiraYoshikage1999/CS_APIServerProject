@@ -22,8 +22,8 @@ namespace CS_APIServerProject
             builder.Services.AddSwaggerGen();
 
             //DB
-            builder.Services.AddDbContext<DBContext>(opt =>
-                opt.UseSqlServer(builder.Configuration.GetConnectionString("Db")));
+            builder.Services.AddDbContext<DataBase>(opt =>
+                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 

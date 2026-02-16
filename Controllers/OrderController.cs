@@ -6,22 +6,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace CS_APIServerProject.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class OrderController : Controller
     {
 
         private readonly IMapper _maper;
-        private readonly DBContext _db;
+        private readonly DataBase _db;
 
-        public OrderController(DBContext db, IMapper mapper)
+        public OrderController(DataBase db, IMapper mapper)
         {
             _maper = mapper;
             _db = db;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        //[HttpGet("Index")]
+        //public IActionResult Index()
+        //{
+        //    return View();
+        //}
 
         //Get all Orders
 

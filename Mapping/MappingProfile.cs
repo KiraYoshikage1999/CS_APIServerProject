@@ -18,8 +18,10 @@ namespace CS_APIServerProject.Mapping
                 .ForMember(d => d.Characteristics,
                 opt => opt.MapFrom(s => s.Characteristics ?? new CharacteristicsDTO()));
 
-            //For User
+            //For Characteristics
             CreateMap<CharacteristicsDTO, Characteristics>();
+            
+            //For User
             CreateMap<User,  UserCreateDTO>();
 
             //Tying user Create DTO method with User
@@ -32,22 +34,39 @@ namespace CS_APIServerProject.Mapping
 
             //For Order
             CreateMap<Order, OrderCreateDTO>();
-            CreateMap<Order, Product>();
+            CreateMap<Order, OrderItem>();
 
             //Tying order Create DTO method with Order and user 
             CreateMap<OrderCreateDTO, Order>()
-                .ForMember(d => d.Id,
-                opt => opt.MapFrom(s => s.FK_Products ?? new List<Product>()));
+                .ForMember(d => d.Id, opt => opt.Ignore())
+                .ForMember(d => d.Items,
+                opt => opt.MapFrom(s => s.Items ?? new List<OrderItemCreateDTO>()));
 
             //Tying order Update DTO method with Order and user
             CreateMap<OrderUpdateDTO, Order>()
                 .ForMember(d => d.Id, opt => opt.Ignore())
-                .ForMember(d => d.FK_Products, 
-                opt => opt.MapFrom(s => s.FK_Products ?? new List<Product>()));
+                .ForMember(d => d.Items, 
+                opt => opt.MapFrom(s => s.Items ?? new List<OrderItemUpdateDTO>()));
 
+            //For OrderItem
 
+            CreateMap<OrderItem, OrderItemCreateDTO>();
+            CreateMap<OrderItem, Product>();
+            //CreateMap<OrderItem, Order>();
 
+            CreateMap<OrderItemCreateDTO, OrderItem>()
+                .ForMember(d => d.Id, opt => opt.Ignore())
+                .ForMember(d => d.Product,
+                opt => opt.MapFrom(s => s.Product ?? new ProductCreateDTO()))
+                .ForMember(d => d.Order,
+                opt => opt.MapFrom(s => s.Order ?? new OrderCreateDTO()));
 
+            CreateMap<OrderItemUpdateDTO, OrderItem>()
+               .ForMember(d => d.Id, opt => opt.Ignore())
+               .ForMember(d => d.Product,
+               opt => opt.MapFrom(s => s.Product ?? new ProductUpdateDTO()))
+               .ForMember(d => d.Order,
+               opt => opt.MapFrom(s => s.Order ?? new OrderUpdateDTO()));
         }
 
 

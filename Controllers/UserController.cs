@@ -7,21 +7,23 @@ using CS_APIServerProject.Data;
 
 namespace CS_APIServerProject.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class UserController : Controller
     {
 
         private readonly IMapper _maper;
-        private readonly DBContext _db;
+        private readonly DataBase _db;
 
-        public UserController(DBContext db, IMapper mapper)
+        public UserController(DataBase db, IMapper mapper)
         {
             _maper = mapper;
             _db = db;
         }
-        public IActionResult Index()
-        {
-            return View();
-        }
+        //public IActionResult Index()
+        //{
+        //    return View();
+        //}
 
 
 
@@ -83,5 +85,7 @@ namespace CS_APIServerProject.Controllers
             await _db.SaveChangesAsync();
             return Ok();
         }
+
+
     }
 }
