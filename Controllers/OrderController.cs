@@ -2,6 +2,7 @@
 using CS_APIServerProject.Data;
 using CS_APIServerProject.DTO;
 using CS_APIServerProject.Models;
+using CS_APIServerProject.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace CS_APIServerProject.Controllers
@@ -12,12 +13,13 @@ namespace CS_APIServerProject.Controllers
     {
 
         private readonly IMapper _maper;
-        private readonly DataBase _db;
-
-        public OrderController(DataBase db, IMapper mapper)
+        private readonly DataBaseContext _db;
+        private readonly IFileStorage _fs;
+        public OrderController(DataBaseContext db, IMapper mapper, IFileStorage fs)
         {
             _maper = mapper;
             _db = db;
+            _fs = fs;
         }
 
         //[HttpGet("Index")]
@@ -93,20 +95,27 @@ namespace CS_APIServerProject.Controllers
         }
         //Get one order by Id
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<OrderReadDTO>> GetOrder(Guid id)
+        public async Task<ActionResult<OrderReadDTO>> GetOrder(Guid id , CancellationToken ct)
         {
-            var item = await _db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            var item = await _db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
             if (item == null) return NotFound();
             return Ok(item);
         }
 
         //Create order
         [HttpPost("create-user")]
-        public async Task<ActionResult<OrderCreateDTO>> CreateOrder([FromBody] UserCreateDTO orders)
+        public async Task<ActionResult<OrderCreateDTO>> CreateOrder([FromBody] OrderCreateDTO orders , [FromBody] OrderItemCreateDTO orderItems, CancellationToken ct)
         {
             if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
 
             var entity = _maper.Map<Order>(orders);
+            var OrderItemItems = _maper.Map<OrderItem>(orderItems);
+            
+            if (orders != null && OrderItemItems.Product.Image.Length > 0)
+            {
+                var imagePath = await _fs.SaveProductImageAsync(OrderItemItems.Product.Image, ct);
+                OrderItemItems.Product.ImagePath = imagePath;
+            }
             if (entity == null) return NotFound();
             entity.Id = Guid.NewGuid();
             await _db.Orders.AddAsync(entity);
@@ -118,7 +127,7 @@ namespace CS_APIServerProject.Controllers
 
         //Update order
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] UserUpdateDTO orders)
+        public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] OrderUpdateDTO orders)
         {
             if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
 

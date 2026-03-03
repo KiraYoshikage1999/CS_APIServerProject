@@ -9,14 +9,14 @@ namespace CS_APIServerProject.Mapping
             CreateMap<Product, ProductCreateDTO>();
             CreateMap<Product, CharacteristicsDTO>();
 
-            CreateMap<ProductCreateDTO, Product>().ForMember(d => d.Id, opt => opt.Ignore())
-                .ForMember(d => d.Characteristics,
-                opt => opt.MapFrom(s => s.Characteristics ?? new CharacteristicsDTO()));
+            CreateMap<ProductCreateDTO, Product>()
+                .ForMember(d => d.Id, opt => opt.Ignore())
+                .ForMember(d => d.CreatedAt, opt => opt.Ignore());
 
             CreateMap<ProductUpdateDTO, Product>()
                 .ForMember(d => d.Id, opt => opt.Ignore())
-                .ForMember(d => d.Characteristics,
-                opt => opt.MapFrom(s => s.Characteristics ?? new CharacteristicsDTO()));
+                .ForMember(d => d.CreatedAt, opt => opt.Ignore());
+
 
             //For Characteristics
             CreateMap<CharacteristicsDTO, Characteristics>();

@@ -13,9 +13,9 @@ namespace CS_APIServerProject.Controllers
     {
 
         private readonly IMapper _maper;
-        private readonly DataBase _db;
+        private readonly DataBaseContext _db;
 
-        public UserController(DataBase db, IMapper mapper)
+        public UserController(DataBaseContext db, IMapper mapper)
         {
             _maper = mapper;
             _db = db;

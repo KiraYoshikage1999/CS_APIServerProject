@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CS_APIServerProject.DTO;
 using AutoMapper;
+using CS_APIServerProject.Services;
+using CS_APIServerProject.Repository;
 
 
 
@@ -14,12 +16,14 @@ namespace CS_APIServerProject.Controllers
     public class ProductController : Controller
     {
         private readonly IMapper _maper;
-        private readonly DataBase _db;
+        private readonly DataBaseContext _db;
+        private readonly IFileStorage _fs;
 
-        public ProductController(DataBase db, IMapper mapper)
+        public ProductController(DataBaseContext db, IMapper mapper, IFileStorage fs)
         {
             _maper = mapper;
             _db = db;
+            _fs = fs;
         }
        
 
@@ -90,22 +94,23 @@ namespace CS_APIServerProject.Controllers
         }
  
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id)
+        public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id, CancellationToken ct , ProductRepository pr)
         {
             var item = await _db.Products.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == Id);
+                .FirstOrDefaultAsync(x => x.Id == Id, ct);
 
-            if (item == null)
-            {
-                return NotFound();
-            }
+            if (item == null) { return NotFound(); }
 
             return Ok(_maper.Map<ProductReadDTO>(item));
+
+
         }
 
 
         [HttpPost("create-product")]
-        public async Task<ActionResult<ProductCreateDTO>> CreateProduct([FromBody] ProductCreateDTO product )
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ProductCreateDTO>> CreateProduct([FromForm] ProductCreateDTO product
+            , CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
@@ -116,14 +121,31 @@ namespace CS_APIServerProject.Controllers
 
             entity.Id = Guid.NewGuid();
             entity.Characteristics ??= new Characteristics();
+
+            if (product.Image != null && product.Image.Length > 0)
+            {
+                var imagePath = await _fs.SaveProductImageAsync(product.Image, ct);
+                entity.ImagePath = imagePath;
+            }
             _db.Products.Add(entity);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(ct);
 
             var result = _maper.Map<ProductReadDTO>(entity);
-            return CreatedAtAction(nameof(GetById), new {id = entity.Id}, result);
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, result);
         }
 
 
+        [HttpPost("create-product")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ProductCreateDTO>> CreateProductRep([FromForm] ProductCreateDTO product , IProductRepository Ipr
+            , CancellationToken ct)
+        {
+            Ipr.AddAsync(product);
+
+            return null;
+        }
+
+        //That's how don't need to do.
         //[HttpPut("{id.guid}")]
         //public async Task<ActionResult<Product>> Update(Guid id , [FromBody] Product product)
         //{
@@ -155,19 +177,19 @@ namespace CS_APIServerProject.Controllers
         //}
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] ProductUpdateDTO product)
+        public async Task<IActionResult> Update(Guid id, [FromBody] ProductUpdateDTO product , CancellationToken ct)
         {
             if (!ModelState.IsValid)
             {
                 return ValidationProblem(ModelState);
             }
 
-            var entity = await _db.Products.FirstOrDefaultAsync(x => x.Id == id);
+            var entity = await _db.Products.FirstOrDefaultAsync(x => x.Id == id, ct);
             if (entity == null) { return NotFound(); }
             entity.Characteristics ??= new Characteristics();
 
             _maper.Map(product, entity);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(ct);
             return Ok();
         }
 
@@ -187,12 +209,16 @@ namespace CS_APIServerProject.Controllers
         //}
 
         [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {
-            var entity = await _db.Products.FirstOrDefaultAsync(x => x.Id==id);
+            var entity = await _db.Products.FirstOrDefaultAsync(x => x.Id==id, ct);
             if (entity == null) { return NotFound(); }
+            //if (entity.Image != null)
+            //{
+            //    await _db.Products.Remove(entity.Image);
+            //}
             _db.Products.Remove(entity);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(ct);
             return Ok();
         }
 

@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CS_APIServerProject.DTO
 {
     public class ProductCreateDTO
     {
+        [JsonIgnore]
+        public Guid Id { get; set; } 
         [Required, MinLength(3)]   
         public string? Brand { get; set; }
         [Required, MinLength(3)]
@@ -17,5 +20,10 @@ namespace CS_APIServerProject.DTO
         public string? Currency { get; set; }
 
         public CharacteristicsDTO? Characteristics { get; set; }
+
+        //public string? ImagePath { get; set; }
+        public IFormFile Image { get; set; }
+
+        
     }
 }

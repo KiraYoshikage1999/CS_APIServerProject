@@ -13,6 +13,9 @@
 
         public Characteristics? Characteristics { get; set; } 
 
+        public string? ImagePath { get; set; }
+        public IFormFile? Image { get; set; }
+
         public DateTime? CreatedAt { get; set; }
 
 

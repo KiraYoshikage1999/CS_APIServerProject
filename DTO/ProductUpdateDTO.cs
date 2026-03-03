@@ -17,5 +17,7 @@ namespace CS_APIServerProject.DTO
         public string? Currency { get; set; }
 
         public CharacteristicsDTO? Characteristics { get; set; }
+        //public string? ImagePath { get; set; }
+        public IFormFile Image { get; set; }
     }
 }

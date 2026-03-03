@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Auth.Data;
+using CS_APIServerProject.Model;
 using CS_APIServerProject.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 namespace CS_APIServerProject.Data
 {
-    public class DataBase : DbContext
+    public class DataBaseContext : IdentityDbContext<AppUser, AppRole, Guid>
     {
-        public DataBase(DbContextOptions<DataBase> options) : base(options) { 
+        public DataBaseContext(DbContextOptions<DataBaseContext> options) : base(options) { 
         }
         //Adding Product in DataBase
         public DbSet<Product> Products => Set<Product>();
@@ -17,6 +20,8 @@ namespace CS_APIServerProject.Data
         //Adding Order in DataBase
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        //Adding token system
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,6 +50,23 @@ namespace CS_APIServerProject.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
+
+
+            modelBuilder.Entity<RefreshToken>(b =>
+            {
+                b.HasKey(x => x.Id);
+
+                b.Property(x => x.Token)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                b.HasIndex(x => x.Token).IsUnique();
+
+                b.HasOne(x => x.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

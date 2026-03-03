@@ -7,7 +7,7 @@
         public Order? Order { get; set; }
         public Guid ProductId { get; set; }
         public Product? Product { get; set; }
-
+        //Can't we show image from Product?
         public int Quanity { get; set; }
         public decimal Price { get; set; }
     }
