@@ -27,6 +27,7 @@ namespace CS_APIServerProject.DTO
             set => _pageSize = value < 1 ? 10 : (value > 50 ? 50 : value);
         }
 
+
         public DateTime? CreatedAt { get; set; }
     }
 }

@@ -104,18 +104,19 @@ namespace CS_APIServerProject.Controllers
 
         //Create order
         [HttpPost("create-user")]
-        public async Task<ActionResult<OrderCreateDTO>> CreateOrder([FromBody] OrderCreateDTO orders , [FromBody] OrderItemCreateDTO orderItems, CancellationToken ct)
+        public async Task<ActionResult<OrderCreateDTO>> CreateOrder([FromBody] OrderCreateDTO orders ,CancellationToken ct)
         {
             if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
 
             var entity = _maper.Map<Order>(orders);
-            var OrderItemItems = _maper.Map<OrderItem>(orderItems);
-            
-            if (orders != null && OrderItemItems.Product.Image.Length > 0)
-            {
-                var imagePath = await _fs.SaveProductImageAsync(OrderItemItems.Product.Image, ct);
-                OrderItemItems.Product.ImagePath = imagePath;
-            }
+            //var OrderItemItems = _maper.Map<OrderItem>(orderItems);
+
+            //Possibly cause of Product , it's don't need special treatment, but if it will be needed, I can write it in the future.
+            //if (orders != null && OrderItemItems.Product.Image.Length > 0)
+            //{
+            //    var imagePath = await _fs.SaveProductImageAsync(OrderItemItems.Product.Image, ct);
+            //    OrderItemItems.Product.ImagePath = imagePath;
+            //}
             if (entity == null) return NotFound();
             entity.Id = Guid.NewGuid();
             await _db.Orders.AddAsync(entity);

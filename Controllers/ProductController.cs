@@ -94,7 +94,7 @@ namespace CS_APIServerProject.Controllers
         }
  
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id, CancellationToken ct , ProductRepository pr)
+        public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id, CancellationToken ct )
         {
             var item = await _db.Products.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == Id, ct);
@@ -122,11 +122,11 @@ namespace CS_APIServerProject.Controllers
             entity.Id = Guid.NewGuid();
             entity.Characteristics ??= new Characteristics();
 
-            if (product.Image != null && product.Image.Length > 0)
-            {
-                var imagePath = await _fs.SaveProductImageAsync(product.Image, ct);
-                entity.ImagePath = imagePath;
-            }
+            //if (product.Image != null && product.Image.Length > 0)
+            //{
+            //    var imagePath = await _fs.SaveProductImageAsync(product.Image, ct);
+            //    entity.ImagePath = imagePath;
+            //}
             _db.Products.Add(entity);
             await _db.SaveChangesAsync(ct);
 

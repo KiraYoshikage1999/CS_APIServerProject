@@ -45,11 +45,11 @@ namespace CS_APIServerProject.Repository
             entity.Id = Guid.NewGuid();
             entity.Characteristics ??= new Characteristics();
 
-            if (product.Image != null && product.Image.Length > 0)
-            {
-                var imagePath = await _fs.SaveProductImageAsync(product.Image, cancellationToken);
-                entity.ImagePath = imagePath;
-            }
+            //if (product.Image != null && product.Image.Length > 0)
+            //{
+            //    var imagePath = await _fs.SaveProductImageAsync(product.Image, cancellationToken);
+            //    entity.ImagePath = imagePath;
+            //}
             _db.Products.Add(entity);
             await _db.SaveChangesAsync(cancellationToken);
 
@@ -57,16 +57,16 @@ namespace CS_APIServerProject.Repository
             //return CreatedAtAction(nameof(GetById), new { id = entity.Id }, result);
             return new ProductCreateDTO
             {
-                Id = entity.Id,
+                
                 Brand = result.Brand,
                 Model = result.Model,
                 Description = result.Description,
                 Price = result.Price,
                 Quanity = result.Quanity,
-                FK_Salesman = result.FK_Salesman,
+                //FK_Salesman = result.FK_Salesman,
                 Currency = result.Currency,
                 Characteristics = result.Characteristics,
-                Image = result.Image
+                ImageCode = result.ImageCode
             };
         }
 
