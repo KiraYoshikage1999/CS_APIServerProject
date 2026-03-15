@@ -16,10 +16,12 @@ namespace CS_APIServerProject.Services
 {
     public class TokenService : ITokenService   
     {
+        //Declaring connection Classes 
         public readonly IConfiguration _configuration;
         public readonly DataBaseContext _dbContext;
         public readonly UserManager<AppUser> _userManager;
 
+        //Ussual constructor
         public TokenService(UserManager<AppUser> userManager, 
             IConfiguration configuration, DataBaseContext dbContext)
         {
@@ -28,6 +30,22 @@ namespace CS_APIServerProject.Services
             _configuration = configuration;
         }
 
+        // New interface-compatible methods that accept userId to avoid exposing AppUser in the service contract
+        public async Task<AccessTokenResult> CreateAccessTokenAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            return await CreateAccessTokenAsync(user);
+        }
+
+        public async Task<RefreshTokenResult> CreateRefreshTokenAsync(Guid userId) 
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            return await CreateRefreshTokenAsync(user);
+        }
+
+        //
         public async Task<AccessTokenResult> CreateAccessTokenAsync(AppUser user)
         {
 

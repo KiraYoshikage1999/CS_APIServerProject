@@ -18,6 +18,7 @@ namespace CS_APIServerProject
     {
         public static async Task Main(string[] args)
         {
+            //
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
@@ -30,8 +31,10 @@ namespace CS_APIServerProject
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            //Deactivating blocks of program for fixing mistakes of fundament and then returning to advandced autorizationg and other
             builder.Services.AddScoped<IFileStorage, FileStorage>();
             builder.Services.AddScoped<ITokenService, TokenService>();
+            //-----
             builder.Services.AddScoped<IProductRepository, ProductRepository>();
             builder.Services.AddOpenApi();
      
@@ -44,6 +47,7 @@ namespace CS_APIServerProject
 
             builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+            
             builder.Services.Configure<ApiBehaviorOptions>(o =>
             {
                 o.InvalidModelStateResponseFactory = ctx =>
@@ -81,12 +85,13 @@ namespace CS_APIServerProject
                             System.Text.Encoding.UTF8.GetBytes(jwtKey))
                     };
                 });
-            // Do not call AddAuthentication() a second time - already configured above
+           // Do not call AddAuthentication() a second time - already configured above
 
-            builder.Services.AddIdentityCore<AppUser>()
-                        .AddRoles<AppRole>()
-                        .AddEntityFrameworkStores<DataBaseContext>()
-                        .AddSignInManager();
+
+           builder.Services.AddIdentityCore<AppUser>()
+                       .AddRoles<AppRole>()
+                       .AddEntityFrameworkStores<DataBaseContext>()
+                       .AddSignInManager();
 
 
             var app = builder.Build();
@@ -136,13 +141,13 @@ namespace CS_APIServerProject
 
             app.UseHttpsRedirection();
 
-            app.UseAuthentication(); // MUST come before UseAuthorization
+            //app.UseAuthentication(); // MUST come before UseAuthorization
             app.UseAuthorization();
 
             app.UseStaticFiles();
 
             // seed, map controllers, run
-            await IdentitySeed.SeedAsync(app.Services);
+            //await IdentitySeed.SeedAsync(app.Services);
             app.MapControllers();
 
             app.Run();

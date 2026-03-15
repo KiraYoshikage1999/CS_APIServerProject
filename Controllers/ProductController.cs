@@ -18,12 +18,14 @@ namespace CS_APIServerProject.Controllers
         private readonly IMapper _maper;
         private readonly DataBaseContext _db;
         private readonly IFileStorage _fs;
+        private readonly IProductRepository _productRepository;
 
-        public ProductController(DataBaseContext db, IMapper mapper, IFileStorage fs)
+        public ProductController(DataBaseContext db, IMapper mapper, IFileStorage fs, IProductRepository productRepository)
         {
             _maper = mapper;
             _db = db;
             _fs = fs;
+            _productRepository = productRepository;
         }
        
 
@@ -96,14 +98,11 @@ namespace CS_APIServerProject.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id, CancellationToken ct )
         {
-            var item = await _db.Products.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == Id, ct);
-
-            if (item == null) { return NotFound(); }
-
-            return Ok(_maper.Map<ProductReadDTO>(item));
-
-
+            var result = await _productRepository.GetProductById(Id, ct);
+            if (result == null)
+                return NotFound();
+            return Ok(result);
+            
         }
 
 
@@ -117,33 +116,19 @@ namespace CS_APIServerProject.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            var entity = _maper.Map<Product>(product);
-
-            entity.Id = Guid.NewGuid();
-            entity.Characteristics ??= new Characteristics();
+            var result = await _productRepository.AddAsync(product, ct);
 
             //if (product.Image != null && product.Image.Length > 0)
             //{
             //    var imagePath = await _fs.SaveProductImageAsync(product.Image, ct);
             //    entity.ImagePath = imagePath;
             //}
-            _db.Products.Add(entity);
-            await _db.SaveChangesAsync(ct);
 
-            var result = _maper.Map<ProductReadDTO>(entity);
-            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, result);
+            return Ok(result.Result); //CreatedAtAction(nameof(await _productRepository.GetProductById(result.Id), new { id = entity.Id }, result);
         }
 
 
-        [HttpPost("create-product")]
-        [Consumes("multipart/form-data")]
-        public async Task<ActionResult<ProductCreateDTO>> CreateProductRep([FromForm] ProductCreateDTO product , IProductRepository Ipr
-            , CancellationToken ct)
-        {
-            Ipr.AddAsync(product);
 
-            return null;
-        }
 
         //That's how don't need to do.
         //[HttpPut("{id.guid}")]

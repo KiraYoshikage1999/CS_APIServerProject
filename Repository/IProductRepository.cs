@@ -5,13 +5,13 @@ namespace CS_APIServerProject.Repository
 {
     public interface IProductRepository
     {
-        Task<List<Product>> GetAllProducts(CancellationToken cancellationToken = default);
-        Task<Product> GetProductById(Guid id, CancellationToken cancellationToken = default);
+        public Task<List<Product>> GetAllProducts(CancellationToken cancellationToken = default);
+        public Task<Product> GetProductById(Guid id, CancellationToken cancellationToken = default);
 
-        Task<ActionResult<ProductCreateDTO>> AddAsync(ProductCreateDTO product, CancellationToken cancellationToken = default);
+        public Task<ActionResult<Product>> AddAsync(ProductCreateDTO product, CancellationToken cancellationToken = default);
 
-        Task DeleteAsync(Product product);
-        Task SaveChangesAsync(CancellationToken cancellationToken = default);
+        public Task<Task> DeleteAsync(Guid Id, CancellationToken ct = default);// must send Guid Id and delete by id
+       
 
     }
 }

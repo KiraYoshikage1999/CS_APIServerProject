@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using CS_APIServerProject.Controllers;
 using CS_APIServerProject.Data;
 using CS_APIServerProject.DTO;
 using CS_APIServerProject.Models;
@@ -12,17 +11,17 @@ namespace CS_APIServerProject.Services
 
         private readonly DataBaseContext _db;
         private readonly IMapper _maper;
-        private readonly IFileStorage _fs;
-        //Temporaly i connect Product Contoller but in future I will change it to Product Repository.
-        private readonly ProductController _controller;
+        //private readonly IFileStorage _fs;
+        // Use IWebHostEnvironment instead of referencing controllers to avoid circular DI
+        private readonly IWebHostEnvironment _env;
 
 
-        public FileStorage(DataBaseContext db, IMapper maper, IFileStorage fs , ProductController controller)
+        public FileStorage(DataBaseContext db, IMapper maper, IWebHostEnvironment env /*, IFileStorage fs */)
         {
             _maper = maper;
             _db = db;
-            _fs = fs;
-            _controller = controller;
+            //_fs = fs;
+            _env = env;
         }
 
         //Like i understand this is special set of types for file that gonna be used for his combining or checking is that exists.
@@ -35,8 +34,7 @@ namespace CS_APIServerProject.Services
         //Valuable of max bytes per file (Image)
         private const long MaxBytes = 3 * 1024 * 1024;
 
-        //Provides info bout this project and host
-        private IWebHostEnvironment _env;
+        //Provides info bout this project and host (injected)
 
         //Method to Delete async some file.
         public Task DeleteAsync(string? relativePath = null, CancellationToken ct = default)
@@ -87,40 +85,55 @@ namespace CS_APIServerProject.Services
 
         public  Task<string> Base64Encode(string? relativePath = null, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(relativePath)) { return (Task<string>)Task.CompletedTask; }
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                return Task.FromResult(string.Empty);
+            }
 
-            //Just getting full path of host.
-            var webRoot = _env.WebRootPath ?? "wwwroot";
-            //Replacing '/' symbols with just separetor in string.
+            // Just getting full path of host.
+            var webRoot = _env?.WebRootPath ?? "wwwroot";
+            // Replacing '/' symbols with OS separator
             var trimmed = relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            //Getting full path
             var fullpath = Path.Combine(webRoot, trimmed);
+
+            if (!File.Exists(fullpath))
+            {
+                return Task.FromResult(string.Empty);
+            }
 
             byte[] imageBytes = File.ReadAllBytes(fullpath);
             string convertedBytes = Convert.ToBase64String(imageBytes);
 
-            return Task<string>.FromResult(convertedBytes);
+            return Task.FromResult(convertedBytes);
         }   
 
-        public Task<string> Base64Decode([FromBody] Product product, CancellationToken ct = default)
+        public Task<string> Base64Decode(string base64, CancellationToken ct = default)
         {
-            if (product == null) throw new ArgumentNullException(nameof(product));
+            if (string.IsNullOrWhiteSpace(base64))
+                return Task.FromResult(string.Empty);
 
-            // Call controller method (may return ActionResult<Product>, Task<ActionResult<Product>> or Product)
-            var rawResult = _controller.GetById(product.Id, ct);
+            byte[] imageBytes;
+            try
+            {
+                imageBytes = Convert.FromBase64String(base64);
+            }
+            catch (FormatException)
+            {
+                return Task.FromResult(string.Empty);
+            }
 
-            Product? productFromController = null;
+            var webRoot = _env?.WebRootPath ?? "wwwroot";
+            var dir = Path.Combine(webRoot, "uploads", "products");
+            Directory.CreateDirectory(dir);
 
-            productFromController = rawResult;
+            var name = $"{Guid.NewGuid():N}.png";
+            var fullPath = Path.Combine(dir, name);
 
-            //string imageBytes = Convert.FromBase64String(productFromController);
-            
+            File.WriteAllBytes(fullPath, imageBytes);
 
-            // Continue implementation: decode base64 from productFromController as needed.
-            // Example placeholder (adjust property name accordingly):
-            // byte[] imageBytes = Convert.FromBase64String(productFromController.ImageBase64);
-            // return Task.FromResult(Encoding.UTF8.GetString(imageBytes));
-            throw new NotImplementedException();
+            // return relative path
+            var relative = $"/uploads/products/{name}";
+            return Task.FromResult(relative);
         }
     }
 }

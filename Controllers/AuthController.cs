@@ -49,9 +49,9 @@ namespace Auth.Controllers
             await _userManager.AddToRoleAsync(user, "User");
 
             var accessToken = await _tokenService.
-                CreateAccessTokenAsync(user);
+                CreateAccessTokenAsync(user.Id);
             var refreshToken = await _tokenService.
-                CreateRefreshTokenAsync(user);
+                CreateRefreshTokenAsync(user.Id);
 
             return Ok(new
             {
@@ -82,9 +82,9 @@ namespace Auth.Controllers
                 return Unauthorized("Invalid email or password.");
 
             var accessToken = await _tokenService.
-                CreateAccessTokenAsync(user);
+                CreateAccessTokenAsync(user.Id);
             var refreshToken = await _tokenService.
-                CreateRefreshTokenAsync(user);
+                CreateRefreshTokenAsync(user.Id);
 
             return Ok(new AuthResponse
             {

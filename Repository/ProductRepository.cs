@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CS_APIServerProject.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.HttpResults;
+using CS_APIServerProject.Repository;
 
 namespace CS_APIServerProject.Repository
 {
@@ -33,13 +34,8 @@ namespace CS_APIServerProject.Repository
          - Do NOT call SaveChangesAsync here (controller's CreateAsync calls SaveChangesAsync separately).
          - Return when the add operation completes.
         */
-        async Task<ActionResult<ProductCreateDTO>> IProductRepository.AddAsync(ProductCreateDTO product, CancellationToken cancellationToken)
+        async Task<ActionResult<Product>> IProductRepository.AddAsync(ProductCreateDTO product, CancellationToken cancellationToken)
         {
-            //if (!ModelState.IsValid)
-            //{
-            //    return ValidationProblem(ModelState);
-            //}
-
             var entity = _maper.Map<Product>(product);
 
             entity.Id = Guid.NewGuid();
@@ -53,11 +49,10 @@ namespace CS_APIServerProject.Repository
             _db.Products.Add(entity);
             await _db.SaveChangesAsync(cancellationToken);
 
-            var result = _maper.Map<ProductReadDTO>(entity);
-            //return CreatedAtAction(nameof(GetById), new { id = entity.Id }, result);
-            return new ProductCreateDTO
+            var result = _maper.Map<Product>(entity);
+            return new Product
             {
-                
+                Id = result.Id,
                 Brand = result.Brand,
                 Model = result.Model,
                 Description = result.Description,
@@ -66,30 +61,33 @@ namespace CS_APIServerProject.Repository
                 //FK_Salesman = result.FK_Salesman,
                 Currency = result.Currency,
                 Characteristics = result.Characteristics,
-                ImageCode = result.ImageCode
+                imageCode = result.imageCode
             };
         }
 
-        Task IProductRepository.DeleteAsync(Product product)
+        public async Task<Task> DeleteAsync(Guid id, CancellationToken ct = default)
         {
-            if (product == null) throw new ArgumentNullException(nameof(product));
-            _db.Products.Remove(product);
+            var product = _db.Products.FindAsync(id, ct);  
+            _db.Remove(product);
+            await _db.SaveChangesAsync();
             return Task.CompletedTask;
         }
 
-        Task<List<Product>> IProductRepository.GetAllProducts(CancellationToken cancellationToken)
+        public async Task<List<Product>> GetAllProducts(CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            var list = await _db.Products.AsNoTracking().ToListAsync(ct);
+            if (list != null || list.Count > 0) return list; //return await Task.FromResult(list);
+            else throw new ArgumentNullException(nameof(list), "List is null or empty");
         }
 
-        Task<Product> IProductRepository.GetProductById(Guid id, CancellationToken cancellationToken)
+        public async Task<Product> GetProductById(Guid id, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
-        }
+            var item = await _db.Products.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
-        async Task IProductRepository.SaveChangesAsync(CancellationToken cancellationToken)
-        {
-            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                if (item != null) return item; //(Product)Task.FromException(new Exception("Item null or doesn't exist")); }
+                else throw new ArgumentNullException(nameof(item), "Item is null or doesn't exist");
+           
         }
     }
 }

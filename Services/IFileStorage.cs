@@ -1,6 +1,4 @@
-﻿using CS_APIServerProject.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Metadata;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace CS_APIServerProject.Services
 {
@@ -12,8 +10,8 @@ namespace CS_APIServerProject.Services
 
         //Special method for encode file Image into string code that i gonna give later to object and then decode.
         Task<string> Base64Encode(string? relativePath = null, CancellationToken ct = default);
-        //Decode to Image
-        Task<string> Base64Decode(Product product, CancellationToken ct = default);
+        //Decode base64 string to image file and return relative path
+        Task<string> Base64Decode(string base64, CancellationToken ct = default);
 
 
     }
