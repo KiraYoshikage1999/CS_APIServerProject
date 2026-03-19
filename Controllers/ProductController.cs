@@ -19,15 +19,17 @@ namespace CS_APIServerProject.Controllers
         private readonly DataBaseContext _db;
         private readonly IFileStorage _fs;
         private readonly IProductRepository _productRepository;
+        private readonly ILogger _logger;
 
-        public ProductController(DataBaseContext db, IMapper mapper, IFileStorage fs, IProductRepository productRepository)
+        public ProductController(DataBaseContext db, IMapper mapper, IFileStorage fs, IProductRepository productRepository, ILogger logger)
         {
             _maper = mapper;
             _db = db;
             _fs = fs;
             _productRepository = productRepository;
+            _logger = logger;
         }
-       
+
 
 
         //[HttpGet]
@@ -37,7 +39,8 @@ namespace CS_APIServerProject.Controllers
         //    return Ok(_maper.Map<ProductReadDTO>(items));
         //}
 
-        [HttpGet]
+        //Getting products with filtering, sorting and pagination
+        [HttpGet("GetProducts")]
         public async Task<ActionResult<PageResult<ProductReadDTO>>> Get([FromBody] ProductQuery q)
         {
             //Filtering
@@ -45,19 +48,23 @@ namespace CS_APIServerProject.Controllers
                 AsNoTracking();
             if(!string.IsNullOrWhiteSpace(q.Brand))
             {
+                _logger.LogInformation("Filtering by brand: {Brand}", q.Brand);
                 query = query.Where(p => 
                 p.Brand == q.Brand);
             }
             if(!string.IsNullOrWhiteSpace(q.State))
             {
+                _logger.LogInformation("Filtering by state: {State}", q.State);
                 query = query.Where(p => 
                 p.Characteristics.state == q.State);
             }
             if (q.PriceFrom > 0)
             {
+                _logger.LogInformation("Filtering by price from: {PriceFrom}", q.PriceFrom);
                 query = query.Where(p => p.Price >= q.PriceFrom);
             }
             if (q.PriceTo > 0) {
+                _logger.LogInformation("Filtering by price to: {PriceTo}", q.PriceTo);
                 query = query.Where(p => p.Price <= q.PriceTo);
             }
 
@@ -86,6 +93,7 @@ namespace CS_APIServerProject.Controllers
 
             var result = _maper.Map<List<ProductReadDTO>>(items);
 
+            //Returning paginated result in format of new object.
             return Ok(new
             {
                 totalCount,
@@ -94,18 +102,22 @@ namespace CS_APIServerProject.Controllers
                 Data = result
             });
         }
- 
+
+        //Getting product by id
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProductReadDTO>> GetById(Guid Id, CancellationToken ct )
         {
             var result = await _productRepository.GetProductById(Id, ct);
             if (result == null)
+            {
+                _logger.LogWarning("Product with id {Id} not found", Id);
                 return NotFound();
+            }
             return Ok(result);
             
         }
 
-
+        //Creating product with image upload
         [HttpPost("create-product")]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ProductCreateDTO>> CreateProduct([FromForm] ProductCreateDTO product
@@ -113,6 +125,7 @@ namespace CS_APIServerProject.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("Invalid product data received");
                 return ValidationProblem(ModelState);
             }
 
@@ -166,13 +179,20 @@ namespace CS_APIServerProject.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.LogInformation("Invalid product data received for update with id {Id}", id);
                 return ValidationProblem(ModelState);
             }
 
             var entity = await _db.Products.FirstOrDefaultAsync(x => x.Id == id, ct);
-            if (entity == null) { return NotFound(); }
+            if (entity == null) { 
+                _logger.LogWarning("Product with id {Id} not found for update", id);
+                return NotFound(); }
             entity.Characteristics ??= new Characteristics();
-
+            if(entity.Characteristics == null)
+            {
+                _logger.LogInformation("Initializing characteristics for product with id {Id} during update", id);
+                entity.Characteristics = new Characteristics();
+            }
             _maper.Map(product, entity);
             await _db.SaveChangesAsync(ct);
             return Ok();
@@ -197,7 +217,9 @@ namespace CS_APIServerProject.Controllers
         public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {
             var entity = await _db.Products.FirstOrDefaultAsync(x => x.Id==id, ct);
-            if (entity == null) { return NotFound(); }
+            if (entity == null) { 
+                _logger.LogWarning("Product with id {Id} not found for deletion", id);
+                return NotFound(); }
             //if (entity.Image != null)
             //{
             //    await _db.Products.Remove(entity.Image);

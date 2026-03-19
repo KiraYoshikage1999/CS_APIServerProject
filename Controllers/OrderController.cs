@@ -15,11 +15,13 @@ namespace CS_APIServerProject.Controllers
         private readonly IMapper _maper;
         private readonly DataBaseContext _db;
         private readonly IFileStorage _fs;
-        public OrderController(DataBaseContext db, IMapper mapper, IFileStorage fs)
+        private readonly ILogger _logger;
+        public OrderController(DataBaseContext db, IMapper mapper, IFileStorage fs, ILogger logger)
         {
             _maper = mapper;
             _db = db;
             _fs = fs;
+            _logger = logger;
         }
 
         //[HttpGet("Index")]
@@ -34,6 +36,8 @@ namespace CS_APIServerProject.Controllers
         public async Task<ActionResult<PageResult<OrderReadDTO>>> Get([FromBody] OrderQuery q)
         {
             //Filtering
+            _logger.LogInformation("Getting orders with query: {@Query}", q);
+
             IQueryable<Order> query = _db.Orders.
                 AsNoTracking();
             if (q.Number > 0)
@@ -85,6 +89,7 @@ namespace CS_APIServerProject.Controllers
 
             var result = _maper.Map<List<OrderReadDTO>>(items);
 
+            //Returning result in a format of PageResult
             return Ok(new
             {
                 totalCount,
@@ -93,12 +98,19 @@ namespace CS_APIServerProject.Controllers
                 Data = result
             });
         }
+
         //Get one order by Id
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<OrderReadDTO>> GetOrder(Guid id , CancellationToken ct)
         {
             var item = await _db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-            if (item == null) return NotFound();
+
+            if (item == null) 
+            {
+                _logger.LogWarning("Order with id {Id} not found", id);
+                return NotFound();
+            }
+
             return Ok(item);
         }
 
@@ -106,7 +118,10 @@ namespace CS_APIServerProject.Controllers
         [HttpPost("create-user")]
         public async Task<ActionResult<OrderCreateDTO>> CreateOrder([FromBody] OrderCreateDTO orders ,CancellationToken ct)
         {
-            if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
+            if (!ModelState.IsValid) {
+                _logger.LogWarning("Invalid model state for creating order: {@ModelState}", ModelState);
+                return ValidationProblem(ModelState);
+            }
 
             var entity = _maper.Map<Order>(orders);
             //var OrderItemItems = _maper.Map<OrderItem>(orderItems);
@@ -117,11 +132,14 @@ namespace CS_APIServerProject.Controllers
             //    var imagePath = await _fs.SaveProductImageAsync(OrderItemItems.Product.Image, ct);
             //    OrderItemItems.Product.ImagePath = imagePath;
             //}
-            if (entity == null) return NotFound();
+            if (entity == null) { 
+                _logger.LogError("Failed to map OrderCreateDTO to Order entity");
+                return ValidationProblem(ModelState);
+            }
             entity.Id = Guid.NewGuid();
             await _db.Orders.AddAsync(entity);
             await _db.SaveChangesAsync();
-
+            //Returning result
             var result = _maper.Map<OrderReadDTO>(entity);
             return CreatedAtAction(nameof(GetOrder), new { id = entity.Id }, result);
         }
@@ -130,11 +148,14 @@ namespace CS_APIServerProject.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] OrderUpdateDTO orders)
         {
-            if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
+            if (!ModelState.IsValid) { 
+                _logger.LogWarning("Invalid model state for updating order with id {Id}: {@ModelState}", id, ModelState);
+                return ValidationProblem(ModelState); }
 
             var entity = await _db.Orders.FirstOrDefaultAsync(x => x.Id == id);
             if (entity == null) { return NotFound(); }
 
+            //Possibly cause of Product, It's don't need special treatment.
             _maper.Map(orders, entity);
             await _db.SaveChangesAsync();
             return Ok();
@@ -145,7 +166,9 @@ namespace CS_APIServerProject.Controllers
         public async Task<IActionResult> RemoveUser(Guid id)
         {
             var entity = await _db.Orders.FirstOrDefaultAsync(x => x.Id == id);
-            if (entity == null) { return NotFound(); }
+            if (entity == null) { 
+                _logger.LogWarning("Order with id {Id} not found for deletion", id);
+                return NotFound(); }
 
             
             _db.Orders.Remove(entity);

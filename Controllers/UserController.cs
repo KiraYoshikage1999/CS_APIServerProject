@@ -14,11 +14,13 @@ namespace CS_APIServerProject.Controllers
 
         private readonly IMapper _maper;
         private readonly DataBaseContext _db;
+        private readonly ILogger _logger;
 
-        public UserController(DataBaseContext db, IMapper mapper)
+        public UserController(DataBaseContext db, IMapper mapper, ILogger logger)
         {
             _maper = mapper;
             _db = db;
+            _logger = logger;
         }
         //public IActionResult Index()
         //{
@@ -31,11 +33,15 @@ namespace CS_APIServerProject.Controllers
         //CRUD for User
 
         //Get All Users
-        [HttpGet]
+        [HttpGet("getAllUsers")]
         public async Task<ActionResult<List<UserReadDTO>>> GetAllUser()
         {
             var items = await _db.Users.ToListAsync();
-            if (items == null) return NotFound();
+            if (items == null)
+            {
+                _logger.LogWarning("No users found in the database.");
+                return View(new List<UserReadDTO>());
+            }
             return Ok(items);
         }
 
@@ -44,17 +50,26 @@ namespace CS_APIServerProject.Controllers
         public async Task<ActionResult<UserReadDTO>> GetUser(Guid id)
         {
             var item = await _db.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-            if (item == null) return NotFound();
+            if (item == null)
+            {
+                _logger.LogWarning("User with id {UserId} not found.", id);
+                return NotFound();
+            }
             return Ok(item);
         }
 
         [HttpPost("create-user")]
         public async Task<ActionResult<UserCreateDTO>> CreateUser([FromBody] UserCreateDTO user)
         {
-            if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
+            if (!ModelState.IsValid) {
+                _logger.LogWarning("Invalid user data received for creation.");
+                return ValidationProblem(ModelState); }
 
             var entity = _maper.Map<User>(user);
-            if (entity == null) return NotFound();
+            if (entity == null) { 
+                _logger.LogError("Mapping from UserCreateDTO to User resulted in null.");
+                return BadRequest();
+            }
             entity.Id = Guid.NewGuid();
             await _db.Users.AddAsync(entity);
             await _db.SaveChangesAsync();
@@ -66,7 +81,9 @@ namespace CS_APIServerProject.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateDTO user)
         {
-            if (!ModelState.IsValid) { return ValidationProblem(ModelState); }
+            if (!ModelState.IsValid) {
+                //_logger.LogInformation("ModelState")
+                return ValidationProblem(ModelState); }
 
             var entity = await _db.Users.FirstOrDefaultAsync(x => x.Id == id);
             if (entity == null) { return NotFound(); }
