@@ -3,9 +3,10 @@ using CS_APIServerProject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CS_APIServerProject.DTO;
-using AutoMapper;
+using CS_APIServerProject.Utils;
 using CS_APIServerProject.Services;
 using CS_APIServerProject.Repository;
+using Microsoft.Extensions.Logging;
 
 
 
@@ -15,15 +16,14 @@ namespace CS_APIServerProject.Controllers
     [Route("api/[controller]")]
     public class ProductController : Controller
     {
-        private readonly IMapper _maper;
+        // removed AutoMapper
         private readonly DataBaseContext _db;
         private readonly IFileStorage _fs;
         private readonly IProductRepository _productRepository;
-        private readonly ILogger _logger;
+        private readonly ILogger<ProductController> _logger;
 
-        public ProductController(DataBaseContext db, IMapper mapper, IFileStorage fs, IProductRepository productRepository, ILogger logger)
+        public ProductController(DataBaseContext db, IFileStorage fs, IProductRepository productRepository, ILogger<ProductController> logger)
         {
-            _maper = mapper;
             _db = db;
             _fs = fs;
             _productRepository = productRepository;
@@ -91,7 +91,7 @@ namespace CS_APIServerProject.Controllers
                 .Take(q.PageSize)
                 .ToListAsync();
 
-            var result = _maper.Map<List<ProductReadDTO>>(items);
+            var result = items.Select(ManualMapper.ToProductReadDTO).ToList();
 
             //Returning paginated result in format of new object.
             return Ok(new
@@ -193,7 +193,7 @@ namespace CS_APIServerProject.Controllers
                 _logger.LogInformation("Initializing characteristics for product with id {Id} during update", id);
                 entity.Characteristics = new Characteristics();
             }
-            _maper.Map(product, entity);
+            ManualMapper.UpdateProduct(product, entity);
             await _db.SaveChangesAsync(ct);
             return Ok();
         }

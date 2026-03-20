@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿using CS_APIServerProject.Utils;
 using CS_APIServerProject.Data;
 using CS_APIServerProject.DTO;
 using CS_APIServerProject.Models;
@@ -12,13 +12,12 @@ namespace CS_APIServerProject.Controllers
     public class OrderController : Controller
     {
 
-        private readonly IMapper _maper;
+        // removed AutoMapper
         private readonly DataBaseContext _db;
         private readonly IFileStorage _fs;
-        private readonly ILogger _logger;
-        public OrderController(DataBaseContext db, IMapper mapper, IFileStorage fs, ILogger logger)
+        private readonly ILogger<OrderController> _logger;
+        public OrderController(DataBaseContext db, IFileStorage fs, ILogger<OrderController> logger)
         {
-            _maper = mapper;
             _db = db;
             _fs = fs;
             _logger = logger;
@@ -87,7 +86,7 @@ namespace CS_APIServerProject.Controllers
                 .Take(q.PageSize)
                 .ToListAsync();
 
-            var result = _maper.Map<List<OrderReadDTO>>(items);
+            var result = items.Select(ManualMapper.ToOrderReadDTO).ToList();
 
             //Returning result in a format of PageResult
             return Ok(new
@@ -123,7 +122,7 @@ namespace CS_APIServerProject.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            var entity = _maper.Map<Order>(orders);
+            var entity = ManualMapper.ToOrder(orders);
             //var OrderItemItems = _maper.Map<OrderItem>(orderItems);
 
             //Possibly cause of Product , it's don't need special treatment, but if it will be needed, I can write it in the future.
@@ -140,7 +139,7 @@ namespace CS_APIServerProject.Controllers
             await _db.Orders.AddAsync(entity);
             await _db.SaveChangesAsync();
             //Returning result
-            var result = _maper.Map<OrderReadDTO>(entity);
+            var result = ManualMapper.ToOrderReadDTO(entity);
             return CreatedAtAction(nameof(GetOrder), new { id = entity.Id }, result);
         }
 
@@ -156,7 +155,7 @@ namespace CS_APIServerProject.Controllers
             if (entity == null) { return NotFound(); }
 
             //Possibly cause of Product, It's don't need special treatment.
-            _maper.Map(orders, entity);
+            ManualMapper.UpdateOrder(orders, entity);
             await _db.SaveChangesAsync();
             return Ok();
         }

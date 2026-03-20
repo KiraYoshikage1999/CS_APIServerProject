@@ -1,5 +1,7 @@
-﻿namespace CS_APIServerProject.DTO
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CS_APIServerProject.DTO
 {
-    public record CharacteristicsDTO(string? state, string? typeGas, int milege, string? typeMilege,
+    public record CharacteristicsDTO(string? state, string? typeGas, [Range(0, double.MaxValue)] int milege, string? typeMilege,
         string? typeBody, string? Color, string? DriveType, string? Engine);
 }

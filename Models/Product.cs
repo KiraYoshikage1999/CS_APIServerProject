@@ -12,6 +12,7 @@ namespace CS_APIServerProject.Models
         [Required, MaxLength(40)]
         public string? Model { get; set; }
         public string? Description { get; set; }
+        //[)]
         public decimal? Price { get; set; }
         public int Quanity { get; set; }
         public string? FK_Salesman { get; set; }

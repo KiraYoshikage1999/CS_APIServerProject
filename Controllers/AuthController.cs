@@ -43,7 +43,8 @@ namespace Auth.Controllers
             {
                 Id = Guid.NewGuid(),
                 UserName = registerDto.Email,
-                Email = registerDto.Email
+                Email = registerDto.Email,
+                //Password = registerDto.Password,
             };
 
             //Creating user with UserManager and passing the user and password from registerDto

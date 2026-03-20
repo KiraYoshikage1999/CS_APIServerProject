@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿using CS_APIServerProject.Utils;
 using CS_APIServerProject.Data;
 using CS_APIServerProject.DTO;
 using CS_APIServerProject.Models;
@@ -17,11 +17,10 @@ namespace CS_APIServerProject.Repository
     public class ProductRepository : IProductRepository
     {
         private readonly DataBaseContext _db;
-        private readonly IMapper _maper;
+        // removed AutoMapper
         private readonly IFileStorage _fs;
-        public ProductRepository(DataBaseContext db , IMapper maper, IFileStorage fs)
+        public ProductRepository(DataBaseContext db , IFileStorage fs)
         {
-            _maper = maper;
             _db = db;
             _fs = fs;
         }
@@ -36,8 +35,7 @@ namespace CS_APIServerProject.Repository
         */
         async Task<ActionResult<Product>> IProductRepository.AddAsync(ProductCreateDTO product, CancellationToken cancellationToken)
         {
-            var entity = _maper.Map<Product>(product);
-
+            var entity = ManualMapper.ToProduct(product);
             entity.Id = Guid.NewGuid();
             entity.Characteristics ??= new Characteristics();
 
@@ -49,7 +47,20 @@ namespace CS_APIServerProject.Repository
             _db.Products.Add(entity);
             await _db.SaveChangesAsync(cancellationToken);
 
-            var result = _maper.Map<Product>(entity);
+            //var result = _maper.Map<Product>(entity);
+            var result = new Product
+            {
+                Id = entity.Id,
+                Brand = entity.Brand,
+                Model = entity.Model,
+                Description = entity.Description,
+                Price = entity.Price,
+                Quanity = entity.Quanity,
+                //FK_Salesman = entity.FK_Salesman,
+                Currency = entity.Currency,
+                Characteristics = entity.Characteristics,
+                imageCode = entity.imageCode
+            };
             return new Product
             {
                 Id = result.Id,

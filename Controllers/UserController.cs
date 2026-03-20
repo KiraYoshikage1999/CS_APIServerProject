@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿using CS_APIServerProject.Utils;
 using CS_APIServerProject.DTO;
 using CS_APIServerProject.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -12,13 +12,12 @@ namespace CS_APIServerProject.Controllers
     public class UserController : Controller
     {
 
-        private readonly IMapper _maper;
+        // removed AutoMapper
         private readonly DataBaseContext _db;
-        private readonly ILogger _logger;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(DataBaseContext db, IMapper mapper, ILogger logger)
+        public UserController(DataBaseContext db, ILogger<UserController> logger)
         {
-            _maper = mapper;
             _db = db;
             _logger = logger;
         }
@@ -65,7 +64,7 @@ namespace CS_APIServerProject.Controllers
                 _logger.LogWarning("Invalid user data received for creation.");
                 return ValidationProblem(ModelState); }
 
-            var entity = _maper.Map<User>(user);
+            var entity = ManualMapper.ToUser(user);
             if (entity == null) { 
                 _logger.LogError("Mapping from UserCreateDTO to User resulted in null.");
                 return BadRequest();
@@ -74,7 +73,7 @@ namespace CS_APIServerProject.Controllers
             await _db.Users.AddAsync(entity);
             await _db.SaveChangesAsync();
 
-            var result = _maper.Map<UserReadDTO>(entity);
+            var result = ManualMapper.ToUserReadDTO(entity);
             return CreatedAtAction(nameof(GetUser), new { id = entity.Id }, result);
         }
 
@@ -88,7 +87,7 @@ namespace CS_APIServerProject.Controllers
             var entity = await _db.Users.FirstOrDefaultAsync(x => x.Id == id);
             if (entity == null) { return NotFound(); }
 
-            _maper.Map(user, entity);
+            ManualMapper.UpdateUser(user, entity);
             await _db.SaveChangesAsync();
             return Ok();
         }

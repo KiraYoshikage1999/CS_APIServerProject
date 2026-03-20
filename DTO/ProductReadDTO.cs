@@ -22,10 +22,10 @@ namespace CS_APIServerProject.DTO
 
         public string? Description { get; set; }
 
-        [MinLength(0)]
+        [Range(0, double.MaxValue)]
         public decimal? Price { get; set; }
 
-        [MinLength(0)]
+        [Range(0, int.MaxValue)]
         public int Quanity { get; set; }
 
         public string? Currency { get; set; }

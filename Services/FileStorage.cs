@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿using CS_APIServerProject.Utils;
 using CS_APIServerProject.Data;
 using CS_APIServerProject.DTO;
 using CS_APIServerProject.Models;
@@ -10,17 +10,15 @@ namespace CS_APIServerProject.Services
     {
 
         private readonly DataBaseContext _db;
-        private readonly IMapper _maper;
+        // removed AutoMapper
         //private readonly IFileStorage _fs;
         // Use IWebHostEnvironment instead of referencing controllers to avoid circular DI
         private readonly IWebHostEnvironment _env;
 
 
-        public FileStorage(DataBaseContext db, IMapper maper, IWebHostEnvironment env /*, IFileStorage fs */)
+        public FileStorage(DataBaseContext db, IWebHostEnvironment env /*, IFileStorage fs */)
         {
-            _maper = maper;
             _db = db;
-            //_fs = fs;
             _env = env;
         }
 

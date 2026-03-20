@@ -30,7 +30,7 @@ namespace CS_APIServerProject.DTO
 
     //Object from Model to DTO
     public record ProductDTO(Guid Id, [Required, MaxLength(30)] string? Brand, [Required, MaxLength(40)] string? Model,
-        string? Description, [MinLength(0)] decimal? Price, [MinLength(0)] int Quanity, string? Currency,
+        string? Description, [Range(0, double.MaxValue)] decimal? Price, [Range(0, int.MaxValue)] int Quanity, string? Currency,
         [Required] CharacteristicsDTO? Characteristics, string? ImageCode, [Required] DateTime? CreatedAt);
 
 

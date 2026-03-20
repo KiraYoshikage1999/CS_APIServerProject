@@ -1,8 +1,9 @@
 
 
 using Auth.Data;
+//using AutoMapper;
 using CS_APIServerProject.Data;
-using CS_APIServerProject.Mapping;
+//using CS_APIServerProject.Mapping;
 using CS_APIServerProject.Repository;
 using CS_APIServerProject.Seed;
 using CS_APIServerProject.Services;
@@ -45,9 +46,8 @@ namespace CS_APIServerProject
                 opt.UseSqlServer(builder.Configuration.
                 GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddAutoMapper(typeof(MappingProfile));
-
-            
+            // AutoMapper removed; using ManualMapper utility instead
+                
             builder.Services.Configure<ApiBehaviorOptions>(o =>
             {
                 o.InvalidModelStateResponseFactory = ctx =>
@@ -85,8 +85,15 @@ namespace CS_APIServerProject
                             System.Text.Encoding.UTF8.GetBytes(jwtKey))
                     };
                 });
-           // Do not call AddAuthentication() a second time - already configured above
-
+            // Do not call AddAuthentication() a second time - already configured above
+            builder.Services.AddIdentityCore<AppUser>(options =>
+            {
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+            });
 
            builder.Services.AddIdentityCore<AppUser>()
                        .AddRoles<AppRole>()
@@ -149,6 +156,8 @@ namespace CS_APIServerProject
             // seed, map controllers, run
             //await IdentitySeed.SeedAsync(app.Services);
             app.MapControllers();
+
+            await IdentitySeed.SeedAsync(app.Services);
 
             app.Run();
         }
